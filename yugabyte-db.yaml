@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: yb-masters
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 7100
+    name: ui
+  - port: 7000
+    name: master-rpc
+  clusterIP: None
+  selector:
+    app: yb-master
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yb-master
+  namespace: mynamespace
+spec:
+  serviceName: "yb-masters"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yb-master
+  template:
+    metadata:
+      labels:
+        app: yb-master
+    spec:
+      containers:
+      - name: yb-master
+        image: yugabytedb/yugabyte:latest
+        ports:
+        - containerPort: 7100
+        - containerPort: 7000
+        volumeMounts:
+        - name: yb-data
+          mountPath: /mnt/disk0
+  volumeClaimTemplates:
+  - metadata:
+      name: yb-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+

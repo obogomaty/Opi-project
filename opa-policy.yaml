@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policy
+  namespace: mynamespace
+data:
+  example.rego: |
+    package example
+    default allow = false
+
+

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-b
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: service-b
+  template:
+    metadata:
+      labels:
+        app: service-b
+    spec:
+      containers:
+      - name: service-b
+        image: obogomaty/service-b:v1
+        env:
+        - name: DB_HOST
+          value: "yugabyte-db-ysql.yugabyte.svc.cluster.local"  # adjust if needed
+        - name: DB_PORT
+          value: "5433"
+        - name: DB_USER
+          value: "your_db_user"
+        - name: DB_PASSWORD
+          value: "your_db_password"
+        - name: DB_NAME
+          value: "your_database"
+        ports:
+        - containerPort: 5000  # adjust port if your Python app listens on a different port
+
+

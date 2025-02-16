@@ -1,0 +1,17 @@
+apiVersion: apisix.apache.org/v2
+kind: ApisixRoute
+metadata:
+  name: service1-route
+  namespace: mynamespace
+spec:
+  http:
+    - name: service1
+      match:
+        hosts:
+          - "api.example.com"
+        paths:
+          - "/service1"
+      backends:
+        - serviceName: service1
+          servicePort: 80
+

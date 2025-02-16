@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yb-master
+  namespace: mynamespace
+spec:
+  serviceName: yb-masters
+  replicas: 3
+  selector:
+    matchLabels:
+      app: yugabyte
+      component: yb-master
+  template:
+    metadata:
+      labels:
+        app: yugabyte
+        component: yb-master
+    spec:
+      containers:
+        - name: yb-master
+          image: yugabytedb/yugabyte:latest
+          resources:
+            requests:
+              cpu: "500m"  # Reduced from "2" to "500m" (0.5 CPU)
+              memory: "1Gi"  # Reduced from 2Gi
+          ports:
+            - containerPort: 7000
+              name: master-ui
+            - containerPort: 7100
+              name: master-rpc
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yb-tserver
+  namespace: mynamespace
+spec:
+  serviceName: yb-tservers
+  replicas: 3
+  selector:
+    matchLabels:
+      app: yugabyte
+      component: yb-tserver
+  template:
+    metadata:
+      labels:
+        app: yugabyte
+        component: yb-tserver
+    spec:
+      containers:
+        - name: yb-tserver
+          image: yugabytedb/yugabyte:latest
+          resources:
+            requests:
+              cpu: "500m"  # Reduced CPU requests to allow scheduling
+              memory: "1Gi"
+          ports:
+            - containerPort: 5433
+              name: ysql
+            - containerPort: 9042
+              name: ycql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yb-master-ui
+  namespace: mynamespace
+spec:
+  type: NodePort  # Changed from LoadBalancer to NodePort
+  selector:
+    app: yugabyte
+    component: yb-master
+  ports:
+    - protocol: TCP
+      port: 7000
+      targetPort: 7000
+      nodePort: 30007  # Exposes on a node port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yb-tserver-service
+  namespace: mynamespace
+spec:
+  type: NodePort  # Changed from LoadBalancer to NodePort
+  selector:
+    app: yugabyte
+    component: yb-tserver
+  ports:
+    - name: ysql
+      protocol: TCP
+      port: 5433
+      targetPort: 5433
+      nodePort: 30053
+    - name: ycql
+      protocol: TCP
+      port: 9042
+      targetPort: 9042
+      nodePort: 30094
+

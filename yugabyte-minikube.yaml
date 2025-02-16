@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yb-master
+  namespace: mynamespace
+spec:
+  serviceName: yb-masters
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yugabyte
+      role: master
+  template:
+    metadata:
+      labels:
+        app: yugabyte
+        role: master
+    spec:
+      containers:
+      - name: yb-master
+        image: yugabytedb/yugabyte:latest
+        command: ["/bin/bash", "-c"]
+        args:
+           - --fs_data_dirs=/tmp/yb-master-data
+           - --master_addresses=yb-master-0.yb-masters.mynamespace.svc.cluster.local:7100
+
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        ports:
+        - containerPort: 7000
+          name: master-ui
+        - containerPort: 7100
+          name: master-rpc
+        volumeMounts:
+        - name: master-data
+          mountPath: /tmp/yb-master-data
+      volumes:
+      - name: master-data
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yb-tserver
+  namespace: mynamespace
+spec:
+  serviceName: yb-tservers
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yugabyte
+      role: tserver
+  template:
+    metadata:
+      labels:
+        app: yugabyte
+        role: tserver
+    spec:
+      containers:
+      - name: yb-tserver
+        image: yugabytedb/yugabyte:latest
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            bin/yb-tserver \
+              --fs_data_dirs /tmp/yb-tserver-data \
+              --tserver_master_addrs yb-master-0.yb-masters:7100
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        ports:
+        - containerPort: 5433
+          name: ysql
+        - containerPort: 9042
+          name: ycql
+        volumeMounts:
+        - name: tserver-data
+          mountPath: /tmp/yb-tserver-data
+      volumes:
+      - name: tserver-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yb-masters
+  namespace: mynamespace
+spec:
+  clusterIP: None
+  selector:
+    app: yugabyte
+    role: master
+  ports:
+  - name: master-rpc
+    port: 7100
+    targetPort: 7100
+  - name: master-ui
+    port: 7000
+    targetPort: 7000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yb-tservers
+  namespace: mynamespace
+spec:
+  clusterIP: None
+  selector:
+    app: yugabyte
+    role: tserver
+  ports:
+  - name: ysql
+    port: 5433
+    targetPort: 5433
+  - name: ycql
+    port: 9042
+    targetPort: 9042
+
