@@ -48,9 +48,5 @@ Created keda-scaledobject.yaml to define the scaling rules for Service A and Ser
 Applied the scaling configuration using kubectl apply -f keda-scaledobject.yaml.
 Tested the Application:
 
-After deploying the services, I accessed the application by routing traffic through APISIX.
-Ensured that the services interacted correctly, the database was connected, and the authorization rules were enforced via OPA.
 
-Conclusion:
-The task was completed by deploying the application and database on Kubernetes, configuring APISIX for routing, and implementing authorization policies using OPA. The services were also scaled dynamically based on traffic.
 
